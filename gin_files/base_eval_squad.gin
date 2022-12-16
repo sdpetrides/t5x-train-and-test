@@ -1,0 +1,8 @@
+include 't5x/configs/runs/eval.gin'
+include 't5x/examples/t5/t5_1_1/base.gin'
+
+# Register necessary SeqIO Tasks/Mixtures.
+import t5.data.tasks
+
+CHECKPOINT_PATH = 'gs://t5-data/pretrained_models/t5.1.1.base/model.ckpt-1000000'
+MIXTURE_OR_TASK_NAME = 'squad_v010_allanswers'
