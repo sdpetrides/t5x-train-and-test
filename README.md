@@ -19,7 +19,7 @@ Google has provided pretrained models of various sizes that can be used for eval
 
 We run the following experiments for each model:
  - [CNN DailyMail](https://paperswithcode.com/dataset/cnn-daily-mail-1)
- - [SuperGLUE (Common Sense Reasoning on ReCoRD)](https://paperswithcode.com/dataset/superglue)
+ - 
  - [SQuAD](https://paperswithcode.com/dataset/squad)
 
 For each trial, we evaluate the model and time the experiment.
@@ -204,7 +204,7 @@ Evaluation was done on CPU.
 | xl |  |  |  |  |
 | xxl |  |  |  |  |
 
-#### SuperGLUE Text Classification
+#### 
 
 | Model | Eval Time (sec) |  |
 | --- | --- | --- |
