@@ -1,6 +1,6 @@
 # t5x-train-and-test
 
-## Members
+## Team Members
 
 Stephen Petrides (sp4076)
 Zhejian Jin (zj2324)
@@ -9,13 +9,26 @@ Zhejian Jin (zj2324)
 
 Our goal is to train various sizes of the T5 model on GCP and compare the models on training performance (time, cost) as well as task performance across the models.
 
-Since the T5 model is very large (millions of parameters), we will have to use cloud compute and TPUs for training and evaluation.
+### Training
+
+Since the T5 model is very large (millions or billions of parameters), we will have to use cloud compute and TPUs for training and evaluation. Further, it's not feasible to train any of these models from scratch, due to cost and time constraints, we will train the models for a one or more epochs and estimage to total time and cost of training.
+
+### Evaluation
+
+Google has provided pretrained models of various sizes that can be used for evaluation of various tasks. In addition to the pretrained models, Google also provides the sequence tasks for evaluation.
+
+We run the following experiments for each model:
+ - [CNN DailyMail](https://paperswithcode.com/dataset/cnn-daily-mail-1)
+ - [SuperGLUE](https://paperswithcode.com/dataset/superglue)
+ - [SQuAD](https://paperswithcode.com/dataset/squad)
+
+For each evaluation, we evaluate the model and time the experiment.
 
 ## Repository Description
 
+This repository holds the instructions and Gin config files for setting up and running the training and evaluation experiments.
 
-
-## Example commands to execute the code
+## Running Experiments
 
 ### Getting Started
 
@@ -55,6 +68,8 @@ $ export TFDS_DATA_DIR=${STORAGE_BUCKET}/data
 $ export T5X_DIR=`pwd`
 ```
 
+For each evaluation experiment, create or use a Gin config file and define the `MODEL_EVAL_PAIR` environment variable.
+
 ### Prepare Evaluation Datasets
 
 Clone the original T5 repository.
@@ -92,11 +107,14 @@ pip3 install .
 ### Evalulate
 
 ```
-python3 -m t5x.eval \
-  --gin_file=small_eval_cnn-dailymail.gin \
+$ export EVAL_OUTPUT_DIR=${STORAGE_BUCKET}/${MODEL_EVAL_PAIR}
+$ time python3 -m t5x.eval \
+  --gin_file=${MODEL_EVAL_PAIR}.gin \
   --gin.EVAL_OUTPUT_DIR=\"${EVAL_OUTPUT_DIR}\" \
   --gin.DROPOUT_RATE=\"0.2\"
 ```
+
+The expected output is below.
 
 ```
 I1214 22:40:49.294055 139789406698560 evaluation.py:587] Evaluating cnn_dailymail_v002
@@ -119,6 +137,41 @@ I1214 22:46:56.566818 139778054727424 evaluation.py:611] Time computing metrics:
 ```
 Total number of parameters: 76961152
 
+### Evaluation Inference (Optional)
+
+Update the `t5/evaluation/eval_utils.py` file in the following way.
+
+```
+diff --git a/t5/evaluation/eval_utils.py b/t5/evaluation/eval_utils.py
+index 9e7cf54..006264c 100644
+--- a/t5/evaluation/eval_utils.py
++++ b/t5/evaluation/eval_utils.py
+@@ -127,10 +127,12 @@ def get_eval_metric_values(events, task_name=None):
+   eval_values = {}
+   for tag, event_values in events.items():
+     if tag.startswith("eval"):
+-      if task_name:
++      if task_name.count("/") == 1:
+         _, metric_name = tag.split("/")
+-      else:
++      elif task_name.count("/") == 1:
+         _, task_name_from_tag, metric_name = tag.split("/")
++      else:
++        raise ValueError("Something wrong with the eval and task name.")
+       eval_task_name = task_name if task_name else task_name_from_tag
+       eval_values["{}/{}".format(eval_task_name, metric_name)] = event_values
+   return eval_values
+```
+
+Parse the evaluation results and output them as CSV file.
+
+```
+$ python3 -m t5.scripts.parse_tb \
+  --summary_dir="$VAL_DIR" \
+  --seqio_summaries \
+  --out_file="$VAL_DIR/results.csv" \
+  --alsologtostderr
+```
 
 ## Results
 
@@ -126,24 +179,37 @@ Total number of parameters: 76961152
 
 Training time from scratch.
 
-| Model | Parameters | Training Time |
-| --- | --- | --- |
-| tiny | | |
-| small | | |
-| base | | |
+| Model | Parameters | Size Increase  | Training Time | Training Time Increase |
+| --- | --- | --- | --- | --- |
+| small | `76961152` | NA |  |  | 
+| base | `` | 3.67x |  |  |
+| large | `783150080` | 3.5x |  |  |
+| xl | `` | 3.9x |  |  |
+| xxl | `` | 3.67x | |  |
 
-Fixed cost of $5.22 per training hour.
+Fixed cost of ~$5 per training hour on `v2-8`. We only used the `v2-8` pod type; to estimate the training time and cost for the `v3-8` would require a new set of experiments.
 
 ### Evaluation
 
-#### SuperGLUE Text Classification
-
 #### CNN/Daily Mail abstractive summarization
 
-| Model | Metric |
-| --- | --- |
-| tiny | |
-| small | |
-| base | |
+| Model | Eval Time (seconds) | Rouge1 | Rouge2 | RougeL |
+| --- | --- | --- | --- |  --- |
+| small | 396 | 8.13 | 1.53 | 7.47 |
+| base | 1147 | 9.78 | 1.81 | 8.70 |
+| large | 2921 | 13.64 | 3.45 | 12.20 |
+| xl |  |  |  |  |
+| xxl |  |  |  |  |
+
+#### SuperGLUE Text Classification
+
+| Model | Eval Time (seconds) | ASDF |
+| --- | --- | --- |
+| small |  |  |
+| base |  |  |
+| large |  |  |
+| xl |  |  |  |
+| xxl |  |  |  |
 
 #### SQuAD question answering
+
