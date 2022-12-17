@@ -19,7 +19,6 @@ Google has provided pretrained models of various sizes that can be used for eval
 
 We run the following experiments for each model:
  - [CNN DailyMail](https://paperswithcode.com/dataset/cnn-daily-mail-1)
- - 
  - [SQuAD](https://paperswithcode.com/dataset/squad)
 
 For each trial, we evaluate the model and time the experiment.
@@ -204,6 +203,16 @@ Evaluation was done on CPU.
 | xl |  |  |  |  |
 | xxl |  |  |  |  |
 
+#### SQuAD question answering
+
+| Model | Eval Time (sec) | EM | FM |
+| --- | --- | --- | --- |
+| small | 591 | 0.000 | 1.697 |
+| base | 1548 | 0.000 | 3.408 |
+| large | 4182 | 0.000 | 6.456 |
+| xl |  |  |  |
+| xxl |  |  |  |
+
 #### 
 
 | Model | Eval Time (sec) |  |
@@ -213,13 +222,3 @@ Evaluation was done on CPU.
 | large |  |  |
 | xl |  |  |
 | xxl |  |  |
-
-#### SQuAD question answering
-
-| Model | Eval Time (sec) | EM | FM |
-| --- | --- | --- | --- |
-| small | 591 | 0.000 | 1.697 |
-| base | 1548 | 0.000 | 3.408 |
-| large |  |  |  |
-| xl |  |  |  |
-| xxl |  |  |  |
