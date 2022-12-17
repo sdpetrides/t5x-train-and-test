@@ -1,11 +1,11 @@
 # t5x-train-and-test
 
-## Team Members
+## Project Description
+
+### Team Members
 
 - Stephen Petrides (sp4076)
 - Zhejian Jin (zj2324)
-
-## Project Description
 
 Our goal is to train various sizes of the T5 model on GCP and compare the models on training (time/cost) and task performance.
 
@@ -52,10 +52,12 @@ Now, in the VM, clone the t5x repository.
 $ git clone https://github.com/google-research/t5x
 ```
 
-Install depenencies and update the $PATH.
+Install depenencies (JAX) and update the $PATH.
 
 ```
+$ cd t5x
 $ python3 -m pip install -e '.[tpu]' -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
+$ python3 -m pip install "jax[tpu]>=0.2.16" -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
 $ export PATH="/home/$USER/.local/bin:$PATH"
 ```
 
@@ -102,6 +104,17 @@ Install the updated t5 package.
 pip3 install .
 ```
 
+### Train
+
+```
+$ cd ~/t5x
+$ export MODEL_DIR=${STORAGE_BUCKET}/small-model
+$ python3 -m t5x.train \
+  --gin_file=small_pretrain.gin \
+  --gin.MODEL_DIR=\"${MODEL_DIR}\" \
+  --gin.USE_CACHED_TASKS=False
+```
+
 ### Evalulate
 
 For each experiment, make sure to define a Gin file and the `MODEL_EVAL_PAIR` and `EVAL_OUTPUT_DIR` environment variables.
@@ -125,7 +138,7 @@ utils.py:1306] The infer dataset is sharded into 1 shards with per-shard batch s
 utils.py:1359] Inference of all batches done.
 evaluation.py:755] Computing metrics for cnn_dailymail_v002
 rouge_scorer.py:83] Using default tokenizer.
-metrics.py:98] rouge1 = 8.14, 95% confidence [7.09, 9.18]
+metrics.py:98] rouge1 = 8.14,1 95% confidence [7.09, 9.18]
 metrics.py:98] rouge2 = 1.53, 95% confidence [1.08, 2.02]
 metrics.py:98] rougeLsum = 7.47, 95% confidence [6.69, 8.41]
 loggers.py:96] cnn_dailymail_v002/rouge1 at step 1000000: 8.140
@@ -177,48 +190,38 @@ $ python3 -m t5.scripts.parse_tb \
 
 ### Training Time
 
-Training time from scratch on a TPU `v2-8` pod.
+Training time from scratch on a single TPU `v3-8` pod.
 
-| Model | Parameters | Size Increase | Training Time | Training Time Increase |
+| Model | Parameters | Size Increase | Training Time (sec per 1K steps) | Training Time Increase |
 | --- | --- | --- | --- | --- |
-| small | `76961152` | NA |  |  | 
-| base | `247577856` | 3.22x |  |  |
-| large | `783150080` | 3.16x |  |  |
-| xl | `` | 3.9x |  |  |
-| xxl | `` | 3.67x | |  |
+| small | `76961152` | NA | 140.94 | NA |
+| base | `247577856` | 3.22x | 490.93 | 3.48x |
+| large | `783150080` | 3.16x | 1709.90 | 3.48x |
+| xl | `2849757184` | 3.64x | NA | NA |
+| xxl | `11135332352` | 3.91x | NA | NA |
 
 Fixed cost of ~$5 per training hour on `v2-8`. We only used the `v2-8` pod type; to estimate the training time and cost for the `v3-8` would require a new set of experiments.
 
 ### Evaluation
 
-Evaluation was done on CPU.
+Evaluation was done on both CPU and GPU.
 
 #### CNN/Daily Mail abstractive summarization
 
-| Model | Eval Time (sec) | Rouge1 | Rouge2 | RougeL |
-| --- | --- | --- | --- |  --- |
-| small | 396 | 8.13 | 1.53 | 7.47 |
-| base | 1147 | 9.78 | 1.81 | 8.70 |
-| large | 2921 | 13.64 | 3.45 | 12.20 |
-| xl |  |  |  |  |
-| xxl |  |  |  |  |
+| Model | Eval Time on CPU (sec) | Eval Time on GPU (sec) | Rouge1 | Rouge2 | RougeL |
+| --- | --- | --- | --- |  --- | --- |
+| small | 396 |  | 8.13 | 1.53 | 7.47 |
+| base | 1147 |  | 9.78 | 1.81 | 8.70 |
+| large | 2921 |  | 13.64 | 3.45 | 12.20 |
+| xl | NA | 256 | 17.71 | 4.55 | 15.12 |
+| xxl | NA | NA | NA | NA |
 
 #### SQuAD question answering
 
-| Model | Eval Time (sec) | EM | FM |
-| --- | --- | --- | --- |
-| small | 591 | 0.000 | 1.697 |
-| base | 1548 | 0.000 | 3.408 |
-| large | 4182 | 0.000 | 6.456 |
-| xl |  |  |  |
-| xxl |  |  |  |
-
-#### 
-
-| Model | Eval Time (sec) |  |
-| --- | --- | --- |
-| small |  |  |
-| base |  |  |
-| large |  |  |
-| xl |  |  |
-| xxl |  |  |
+| Model | Eval Time on CPU (sec) | Eval Time on GPU (sec) | EM | FM |
+| --- | --- | --- | --- | --- |
+| small | 591 |  | 0.000 | 1.697 |
+| base | 1548 |  | 0.000 | 3.408 |
+| large | 4182 | 134 | 0.000 | 6.456 |
+| xl | NA | 249 | 0.000 | 5.442 |
+| xxl | NA | NA | NA | NA |
