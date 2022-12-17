@@ -7,7 +7,7 @@
 - Stephen Petrides (sp4076)
 - Zhejian Jin (zj2324)
 
-Our goal is to train various sizes of the T5 model on GCP and compare the models on training (time/cost) and task performance.
+Our goal is to pretrain various sizes of the T5 model, evaluate various sizes on two tasks with and without fine-tuning.
 
 ### Training
 
@@ -70,7 +70,7 @@ $ export T5X_DIR=`pwd`
 
 For each evaluation experiment, create or use a Gin config file and define the `MODEL_EVAL_PAIR` environment variable.
 
-### Prepare Evaluation Datasets
+### Prepare Datasets
 
 Clone the original T5 repository.
 
@@ -166,42 +166,6 @@ loggers.py:443] Writing completed in 0.244310 seconds (8.186316 examples/sec).
 evaluation.py:611] Time computing metrics: 1.996996 secs.
 ```
 
-### Evaluation Inference (Optional)
-
-Update the `t5/evaluation/eval_utils.py` file in the following way.
-
-```
-diff --git a/t5/evaluation/eval_utils.py b/t5/evaluation/eval_utils.py
-index 9e7cf54..006264c 100644
---- a/t5/evaluation/eval_utils.py
-+++ b/t5/evaluation/eval_utils.py
-@@ -127,10 +127,12 @@ def get_eval_metric_values(events, task_name=None):
-   eval_values = {}
-   for tag, event_values in events.items():
-     if tag.startswith("eval"):
--      if task_name:
-+      if task_name.count("/") == 1:
-         _, metric_name = tag.split("/")
--      else:
-+      elif task_name.count("/") == 1:
-         _, task_name_from_tag, metric_name = tag.split("/")
-+      else:
-+        raise ValueError("Something wrong with the eval and task name.")
-       eval_task_name = task_name if task_name else task_name_from_tag
-       eval_values["{}/{}".format(eval_task_name, metric_name)] = event_values
-   return eval_values
-```
-
-Parse the evaluation results and output them as CSV file.
-
-```
-$ python3 -m t5.scripts.parse_tb \
-  --summary_dir="$VAL_DIR" \
-  --seqio_summaries \
-  --out_file="$VAL_DIR/results.csv" \
-  --alsologtostderr
-```
-
 ## Results
 
 ### Training Time
@@ -263,6 +227,7 @@ Finetune the Large model on various tasks.
 | --- | --- |  --- |
 | 0 | 0.000 | 6.456 |
 | 1000 | 23.898 | 47.581 |
-| 2000 |  |  |
-| 3000 |  |  |
-| 4000 |  |  |
+| 2000 | 25.052 | 48.738 |
+| 3000 | 24.465 | 48.904 |
+| 4000 | 24.144 | 50.493 |
+| 5000 | 25.676 | 50.563 |
