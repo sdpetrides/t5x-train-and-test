@@ -1,0 +1,12 @@
+include 't5x/configs/runs/finetune.gin'
+include 't5x/examples/t5/t5_1_1/large.gin'
+
+# Register necessary SeqIO Tasks/Mixtures.
+import t5.data.tasks
+
+MIXTURE_OR_TASK_NAME = "cnn_dailymail_v002"
+TASK_FEATURE_LENGTHS = {"inputs": 256, "targets": 256}
+TRAIN_STEPS = 1_020_000  # 1000000 pre-trained steps + 20000 fine-tuning steps.
+DROPOUT_RATE = 0.0
+INITIAL_CHECKPOINT_PATH = "gs://t5-data/pretrained_models/t5x/t5_1_1_large/checkpoint_1000000"
+LOSS_NORMALIZING_FACTOR = 233472

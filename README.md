@@ -96,6 +96,22 @@ index 4ad29f5..faeb423 100644
      preprocessors=[
          functools.partial(
              preprocessors.summarize,
+@@ -335,7 +336,8 @@ TaskRegistry.add(
+ # Maximized evaluation metrics over all answers.
+ TaskRegistry.add(
+     "squad_v010_allanswers",
+-    source=seqio.TfdsDataSource(tfds_name="squad/v1.1:3.0.0"),
++    source=seqio.TfdsDataSource(
++        tfds_name="squad/v1.1:3.0.0",
++        splits={
++            "train": "train",
++            "validation": "validation[:50%]",
++            "test": "validation[:10%]",
++        },
++    ),
+     preprocessors=[
+         preprocessors.squad,
+         seqio.preprocessors.tokenize,
 ```
 
 Install the updated t5 package.
@@ -204,24 +220,49 @@ Fixed cost of ~$5 per training hour on `v2-8`. We only used the `v2-8` pod type;
 
 ### Evaluation
 
-Evaluation was done on both CPU and GPU.
+Evaluation was done on both CPU and GPU without any finetuning.
 
 #### CNN/Daily Mail abstractive summarization
 
 | Model | Eval Time on CPU (sec) | Eval Time on GPU (sec) | Rouge1 | Rouge2 | RougeL |
 | --- | --- | --- | --- |  --- | --- |
-| small | 396 |  | 8.13 | 1.53 | 7.47 |
-| base | 1147 |  | 9.78 | 1.81 | 8.70 |
-| large | 2921 |  | 13.64 | 3.45 | 12.20 |
-| xl | NA | 256 | 17.71 | 4.55 | 15.12 |
-| xxl | NA | NA | NA | NA |
+| small | 396 | 51 | 8.13 | 1.53 | 7.47 |
+| base | 1147 | 78 | 9.78 | 1.81 | 8.70 |
+| large | 2921 | 133 | 13.64 | 3.45 | 12.20 |
+| xl | 5500* | 256 | 17.71 | 4.55 | 15.12 |
+| xxl | NA | NA | NA | NA | NA |
 
 #### SQuAD question answering
 
 | Model | Eval Time on CPU (sec) | Eval Time on GPU (sec) | EM | FM |
 | --- | --- | --- | --- | --- |
-| small | 591 |  | 0.000 | 1.697 |
-| base | 1548 |  | 0.000 | 3.408 |
+| small | 591 | 47 | 0.000 | 1.697 |
+| base | 1548 | 75 | 0.000 | 3.408 |
 | large | 4182 | 134 | 0.000 | 6.456 |
-| xl | NA | 249 | 0.000 | 5.442 |
+| xl | 7950* | 249 | 0.000 | 5.442 |
 | xxl | NA | NA | NA | NA |
+
+### Finetuning
+
+Finetune the Large model on various tasks.
+
+#### CNN/Daily Mail abstractive summarization
+
+| Finetuning Steps | Rouge1 | Rouge2 | RougeL |
+| --- | --- |  --- | --- |
+| 0 | 13.64 | 3.45 | 12.20 |
+| 1000 | 26.85 | 7.79 | 22.48 |
+| 2000 | 26.47 | 7.10 | 21.78 |
+| 3000 | 25.81 | 6.67 | 21.62 |
+| 4000 | 29.25 | 8.85 | 24.88 |
+| 5000 | 28.90 | 8.51 | 24.34 |
+
+#### SQuAD question answering
+
+| Finetuning Steps | EM | F1 |
+| --- | --- |  --- |
+| 0 | 0.000 | 6.456 |
+| 1000 | 23.898 | 47.581 |
+| 2000 |  |  |
+| 3000 |  |  |
+| 4000 |  |  |
