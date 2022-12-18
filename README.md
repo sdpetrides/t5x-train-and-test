@@ -7,11 +7,11 @@
 - Stephen Petrides (sp4076)
 - Zhejian Jin (zj2324)
 
-Our goal is to pretrain various sizes of the T5 model, evaluate various sizes on two tasks with and without fine-tuning.
+Our goal is to pretrain evaluate and fine-tune various sizes of the T5 on two language tasks.
 
 ### Training
 
-Since the T5 model is very large, millions or billions of parameters, we will have to use cloud compute and TPUs for training and evaluation. Further, it's not feasible to train any of these models from scratch, due to cost and time constraints; therefore, we will train the models for a one or more epochs and estimate to total time and cost of training.
+Since the T5 model is very large, consisting of millions or billions of parameters, we will have to use cloud compute and TPUs for training and evaluation. Further, it's not feasible to train any of these models from scratch, due to cost and time constraints; therefore, we will train the models for a one or more epochs and estimate to total time and cost of training.
 
 ### Evaluation
 
@@ -122,6 +122,8 @@ pip3 install .
 
 ### Train
 
+For each model, running the following command, changing the model reference Gin file and name each time.
+
 ```
 $ cd ~/t5x
 $ export MODEL_DIR=${STORAGE_BUCKET}/small-model
@@ -130,6 +132,8 @@ $ python3 -m t5x.train \
   --gin.MODEL_DIR=\"${MODEL_DIR}\" \
   --gin.USE_CACHED_TASKS=False
 ```
+
+See the results section below for the results and observations.
 
 ### Evalulate
 
@@ -166,6 +170,8 @@ loggers.py:443] Writing completed in 0.244310 seconds (8.186316 examples/sec).
 evaluation.py:611] Time computing metrics: 1.996996 secs.
 ```
 
+See the results section below for the results and observations.
+
 ## Results
 
 ### Training Time
@@ -180,7 +186,9 @@ Training time from scratch on a single TPU `v3-8` pod.
 | xl | `2849757184` | 3.64x | NA | NA |
 | xxl | `11135332352` | 3.91x | NA | NA |
 
-Fixed cost of ~$5 per training hour on `v2-8`. We only used the `v2-8` pod type; to estimate the training time and cost for the `v3-8` would require a new set of experiments.
+Fixed cost of ~$5 per training hour on `v2-8` and ~$8 per training hour on `v3.8`. To extrapolate the full pretraining time multiple the training time per 1000 steps by the number of iterations of that size intended. To estimate the cost, convert from seconds to hours and multiply by the relevant cost per training hour.
+
+For example, at this pace, it would take nearly 500 hours (19 days) to train the `large` model.
 
 ### Evaluation
 
@@ -206,9 +214,11 @@ Evaluation was done on both CPU and GPU without any finetuning.
 | xl | 7950* | 249 | 0.000 | 5.442 |
 | xxl | NA | NA | NA | NA |
 
-### Finetuning
+As the model size increases, the evaluation time on CPU and GPU increases. Further, the performance generally improves each time, with some exceptions. Still, without fine-tuning the performance is not near SOTA.
 
-Finetune the Large model on various tasks.
+### Fine-tuning
+
+We performed fine-tuning on the Large model on both tasks. For each, we trained for 5000 steps and evaluated performance at each 1000 steps. After fine-tuning, the performance moves closer to SOTA performance.
 
 #### CNN/Daily Mail abstractive summarization
 
